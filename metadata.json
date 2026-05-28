@@ -1,0 +1,6 @@
+{
+  "name": "Klopp.tb",
+  "description": "Mobile-first website for Klopp.tb coffee shop, featuring table ordering, menu browsing, and online cashier.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
