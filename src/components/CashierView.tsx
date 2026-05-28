@@ -17,7 +17,12 @@ import {
   RotateCcw,
   Sparkles,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  FileSpreadsheet,
+  FileText,
+  Mail,
+  MessageCircle,
+  Download
 } from 'lucide-react';
 
 interface CashierViewProps {
@@ -49,6 +54,42 @@ export function CashierView({ orders, menus, onUpdateStatus, onUpdatePayment, on
   const activeCount = orders.filter(o => o.status === 'pending' || o.status === 'preparing').length;
   const completedCount = orders.filter(o => o.status === 'completed').length;
   const unpaidCount = orders.filter(o => o.paymentStatus === 'unpaid' && o.status !== 'cancelled').length;
+
+  const handleExportCSV = () => {
+    const header = ['ID Pesanan', 'Tanggal', 'Nama Pemesan', 'No. Meja', 'Status Pembayaran', 'Status Pesanan', 'Total Harga (Rp)'];
+    const rows = orders.map(order => [
+      order.id,
+      new Date(order.createdAt).toLocaleString('id-ID'),
+      order.customerName,
+      order.tableNumber,
+      order.paymentStatus === 'paid' ? 'Lunas' : 'Belum Bayar',
+      order.status,
+      order.totalAmount
+    ]);
+    const csvContent = [header, ...rows].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Laporan_Penjualan_Klopp_TB_${new Date().toISOString().slice(0,10)}.csv`;
+    link.click();
+  };
+
+  const handleExportPDF = () => {
+    window.print();
+  };
+
+  const commonReportText = () => {
+    return `*Laporan Penjualan Klopp.tb*\nTanggal: ${new Date().toLocaleDateString('id-ID')}\n\n💰 Total Pendapatan: Rp ${formatRp(totalRevenue)}\n✅ Pesanan Selesai: ${completedCount}\n⚠️ Belum Dibayar: ${unpaidCount}\n\nTerima kasih.`;
+  };
+
+  const handleEmailReport = () => {
+    const body = commonReportText().replace(/\*/g, ''); 
+    window.location.href = `mailto:adjiprasetyo4@gmail.com?subject=Laporan Penjualan Klopp.tb ${new Date().toLocaleDateString('id-ID')}&body=${encodeURIComponent(body)}`;
+  };
+
+  const handleWhatsAppReport = () => {
+    window.open(`https://wa.me/6281214007871?text=${encodeURIComponent(commonReportText())}`, '_blank');
+  };
 
   return (
     <section className="py-12 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto relative min-h-[90vh] bg-white/60 backdrop-blur-lg z-10 rounded-[3rem] mt-4 mb-4 shadow-xl border border-white/50">
@@ -82,46 +123,46 @@ export function CashierView({ orders, menus, onUpdateStatus, onUpdatePayment, on
       {/* STATS DECK */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-8 relative z-10">
         {/* Stat 1 */}
-        <div className="bg-white/85 p-3.5 md:p-5 rounded-2xl md:rounded-3xl border border-orange-100/40 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-4">
+        <div className="bg-white/85 p-4 md:p-5 rounded-2xl md:rounded-3xl border border-orange-100/40 shadow-sm flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4">
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
             <TrendingUp className="w-5 h-5 md:w-6 md:h-6" />
           </div>
-          <div>
-            <span className="text-slate-400 text-[10px] md:text-xs font-bold block mb-0.5">Total Pendapatan</span>
-            <span className="text-sm md:text-lg font-black text-emerald-600">Rp {formatRp(totalRevenue)}</span>
+          <div className="flex-1 w-full">
+            <span className="text-slate-500 text-[10px] sm:text-xs font-bold block mb-0.5 leading-tight">Total Pendapatan</span>
+            <span className="text-sm sm:text-lg font-black text-emerald-600 block truncate">Rp {formatRp(totalRevenue)}</span>
           </div>
         </div>
         
         {/* Stat 2 */}
-        <div className="bg-white/85 p-3.5 md:p-5 rounded-2xl md:rounded-3xl border border-orange-100/40 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-4">
+        <div className="bg-white/85 p-4 md:p-5 rounded-2xl md:rounded-3xl border border-orange-100/40 shadow-sm flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4">
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0">
             <ClipboardList className="w-5 h-5 md:w-6 md:h-6" />
           </div>
-          <div>
-            <span className="text-slate-400 text-[10px] md:text-xs font-bold block mb-0.5">Pesanan Aktif</span>
-            <span className="text-sm md:text-lg font-black text-slate-800">{activeCount} Antrean</span>
+          <div className="flex-1 w-full">
+            <span className="text-slate-500 text-[10px] sm:text-xs font-bold block mb-0.5 leading-tight">Pesanan Aktif</span>
+            <span className="text-sm sm:text-lg font-black text-slate-800 block truncate">{activeCount} Antrean</span>
           </div>
         </div>
 
         {/* Stat 3 */}
-        <div className="bg-white/85 p-3.5 md:p-5 rounded-2xl md:rounded-3xl border border-orange-100/40 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-4">
+        <div className="bg-white/85 p-4 md:p-5 rounded-2xl md:rounded-3xl border border-orange-100/40 shadow-sm flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4">
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
             <AlertCircle className="w-5 h-5 md:w-6 md:h-6" />
           </div>
-          <div>
-            <span className="text-slate-400 text-[10px] md:text-xs font-bold block mb-0.5">Belum Bayar (Meja)</span>
-            <span className="text-sm md:text-lg font-black text-amber-600">{unpaidCount} Tagihan</span>
+          <div className="flex-1 w-full">
+            <span className="text-slate-500 text-[10px] sm:text-xs font-bold block mb-0.5 leading-tight">Belum Bayar (Meja)</span>
+            <span className="text-sm sm:text-lg font-black text-amber-600 block truncate">{unpaidCount} Tagihan</span>
           </div>
         </div>
 
         {/* Stat 4 */}
-        <div className="bg-white/85 p-3.5 md:p-5 rounded-2xl md:rounded-3xl border border-orange-100/40 shadow-sm flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-4">
+        <div className="bg-white/85 p-4 md:p-5 rounded-2xl md:rounded-3xl border border-orange-100/40 shadow-sm flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4">
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl md:rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
             <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6" />
           </div>
-          <div>
-            <span className="text-slate-400 text-[10px] md:text-xs font-bold block mb-0.5">Selesai Disajikan</span>
-            <span className="text-sm md:text-lg font-black text-blue-600">{completedCount} Pesanan</span>
+          <div className="flex-1 w-full">
+            <span className="text-slate-500 text-[10px] sm:text-xs font-bold block mb-0.5 leading-tight">Selesai Disajikan</span>
+            <span className="text-sm sm:text-lg font-black text-blue-600 block truncate">{completedCount} Pesanan</span>
           </div>
         </div>
       </div>
@@ -392,6 +433,30 @@ export function CashierView({ orders, menus, onUpdateStatus, onUpdatePayment, on
                    </button>
                 </div>
               ))}
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-3xl border border-orange-100 shadow-sm">
+            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2 mb-4">
+              <FileSpreadsheet className="text-emerald-500 w-5 h-5 flex-shrink-0" />
+              Laporan & Ekspor
+            </h3>
+            <p className="text-xs text-slate-500 mb-4 font-semibold leading-relaxed">
+              Unduh laporan harian atau langsung bagikan ke kontak owner.
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={handleExportCSV} className="flex items-center justify-center gap-2 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-xl text-xs font-bold transition-all border border-emerald-100 shadow-sm">
+                <FileSpreadsheet className="w-4 h-4" /> Excel
+              </button>
+              <button onClick={handleExportPDF} className="flex items-center justify-center gap-2 py-2.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-xl text-xs font-bold transition-all border border-rose-100 shadow-sm">
+                <FileText className="w-4 h-4" /> PDF
+              </button>
+              <button onClick={handleWhatsAppReport} className="flex items-center justify-center gap-2 py-2.5 bg-[#dcf8c6]/70 text-[#075E54] hover:bg-[#dcf8c6] rounded-xl text-xs font-bold transition-all border border-green-200 shadow-sm">
+                <MessageCircle className="w-4 h-4" /> WhatsApp
+              </button>
+              <button onClick={handleEmailReport} className="flex items-center justify-center gap-2 py-2.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl text-xs font-bold transition-all border border-blue-100 shadow-sm">
+                <Mail className="w-4 h-4" /> Email
+              </button>
             </div>
           </div>
 
